@@ -1,10 +1,14 @@
-
 import Foundation
 import LocalAuthentication
 
 let service = "cloud.nicholas.prophetbot"
 let description = "unlock your GPG key"
 let policy = LAPolicy.deviceOwnerAuthenticationWithBiometrics
+
+// https://github.com/gpg/libgpg-error/blob/220a427b4f997ef6af1b2d4e82ef1dc96e0cd6ff/src/err-codes.h.in
+let GPG_ERR_GENERAL = 1
+let GPG_ERR_NOT_IMPLEMENTED = 69
+let GPG_ERR_UNKNOWN_OPTION = 174
 
 func set(password: String) -> Bool {
     let query: [String: Any] = [
@@ -50,9 +54,9 @@ func exists() -> Bool {
     return true
 }
 
-let context = LAContext()
-context.touchIDAuthenticationAllowableReuseDuration = 30
+setbuf(__stdoutp, nil)
 
+let context = LAContext()
 var error: NSError?
 guard context.canEvaluatePolicy(policy, error: &error) else {
     print("Cannot leverage deviceOwnerAuthenticationWithBiometrics")
@@ -60,15 +64,32 @@ guard context.canEvaluatePolicy(policy, error: &error) else {
 }
 
 if exists() {
-    context.evaluatePolicy(policy, localizedReason: description) { success, error in
-        if success && error == nil {
-            guard let password = get() else {
-                print("Failed to retrieve password")
-                exit(EXIT_FAILURE)
-            }
-            print(password)
-        } else {
-            exit(EXIT_FAILURE)
+    print("OK")
+    while let input = readLine() {
+        switch input.lowercased().split(separator: " ")[0] {
+            case "getpin":
+                // TODO: Move to get() to reduce this switch block
+                context.evaluatePolicy(policy, localizedReason: description) { success, _ in
+                    if success {
+                        let password = get()
+                        if password != nil {
+                            print("D \(password!)")
+                            print("OK")
+                        } else {
+                            print("ERR \(GPG_ERR_GENERAL) Failed to retrieve password")
+                        }
+                    } else {
+                        print("ERR \(GPG_ERR_GENERAL) Authentication policy evaluation failed")
+                    }
+                }
+            case "bye":
+                print("OK")
+                exit(EXIT_SUCCESS)
+            case "option", "setkeyinfo", "setdesc", "setprompt":
+                // Some commands must be implemented, so stub them out
+                print("OK")
+            default:
+                print("ERR \(GPG_ERR_NOT_IMPLEMENTED) Command not implemented")
         }
     }
 } else {
