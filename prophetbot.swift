@@ -13,13 +13,8 @@ func set(password: String) -> Bool {
         kSecValueData as String: password
     ]
     let status = SecItemAdd(query as CFDictionary, nil)
-    if status == errSecSuccess {
-        return true
-    }
-    if let message = SecCopyErrorMessageString(status, nil) {
-        print(message)
-    }
-    return false
+
+    return status == errSecSuccess
 }
 
 func get() -> String? {
@@ -32,12 +27,27 @@ func get() -> String? {
     var item: CFTypeRef?
     let status = SecItemCopyMatching(query as CFDictionary, &item)
 
+    guard status != errSecItemNotFound else { return nil }
     guard status == errSecSuccess,
       let passwordData = item as? Data,
       let password = String(data: passwordData, encoding:String.Encoding.utf8)
-    else { return nil }
-
+    else { exit(EXIT_FAILURE) }
     return password
+}
+
+func exists() -> Bool {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecMatchLimit as String: kSecMatchLimitOne,
+        kSecReturnData as String: false
+    ]
+    var item: CFTypeRef?
+    let status = SecItemCopyMatching(query as CFDictionary, &item)
+
+    guard status != errSecItemNotFound else { return false }
+    guard status == errSecSuccess else { exit(EXIT_FAILURE) }
+    return true
 }
 
 let context = LAContext()
@@ -49,17 +59,25 @@ guard context.canEvaluatePolicy(policy, error: &error) else {
     exit(EXIT_FAILURE)
 }
 
-let _ = set(password: "Hello world!")
-context.evaluatePolicy(policy, localizedReason: description) { success, error in
-    if success && error == nil {
-        guard let password = get() else {
-            print("Failed to retrieve password")
+if exists() {
+    context.evaluatePolicy(policy, localizedReason: description) { success, error in
+        if success && error == nil {
+            guard let password = get() else {
+                print("Failed to retrieve password")
+                exit(EXIT_FAILURE)
+            }
+            print(password)
+        } else {
             exit(EXIT_FAILURE)
         }
-        print(password)
-    } else {
-        let errorDescription = error?.localizedDescription ?? "Unknown error"
-        print(errorDescription)
+    }
+} else {
+    print("Enter GPG passphrase > ", terminator: "")
+    if let password = readLine() {
+        if set(password: password) {
+            print("Successfully stored passphrase")
+        } else {
+            print("Failed to store passphrase")
+        }
     }
 }
-dispatchMain()
