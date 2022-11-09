@@ -8,7 +8,7 @@ Somewhat a fork of [pinentry-tem](https://gitlab.com/notpushkin/pinentry-tem). S
 
 For further details about pinentry, refer to [the documentation](https://github.com/gpg/pinentry/blob/7f7fd8bcfd74919091cc318b27b8617a9ef2ac82/doc/pinentry.texi).
 
-Prophetbot is property of [Future Cat/OneShot](https://oneshot-game.com/). You should play OneShot.
+Prophetbot is property of [Future Cat/OneShot](https://www.oneshot-game.com/). You should play OneShot.
 
 ## Usage
 
