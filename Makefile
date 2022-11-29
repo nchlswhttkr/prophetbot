@@ -4,6 +4,8 @@ prophetbot: prophetbot.swift
 .PHONY: install
 install: prophetbot
 	@cp prophetbot /usr/local/bin/prophetbot
+	@./sign-binary.sh
+	@swift set-icon.swift
 
 .PHONY: clean
 clean:

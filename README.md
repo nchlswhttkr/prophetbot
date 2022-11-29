@@ -16,8 +16,6 @@ Build, sign, set password and configure as pinentry for GPG.
 
 ```sh
 make install
-security find-identity -v -p codesigning
-codesign -s <identity> /usr/local/bin/prophetbot
 prophetbot
 echo "pinentry-program /usr/local/bin/prophetbot" >> ~/.gnupg/gpg-agent.conf
 ```
