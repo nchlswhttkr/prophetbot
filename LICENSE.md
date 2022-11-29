@@ -1,6 +1,10 @@
-MIT License
-
 Copyright (c) 2022 Nicholas Whittaker
+
+Portions of this software are not covered by this license, namely the following:
+
+- Images of Prophetbot (namely icon.png and prophetbot.png) are property of Future Cat.
+
+The remain software is licensed as follows.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
