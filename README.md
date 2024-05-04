@@ -18,4 +18,6 @@ Build, sign, set password and configure as pinentry for GPG.
 make install
 prophetbot
 echo "pinentry-program /usr/local/bin/prophetbot" >> ~/.gnupg/gpg-agent.conf
+
+echo "Hello Prophetbot" | gpg --clearsign
 ```
