@@ -1,2 +1,4 @@
 .build/
 prophetbot
+prophetbot-gpg
+prophetbot-ssh
