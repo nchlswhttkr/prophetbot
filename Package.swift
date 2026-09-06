@@ -5,13 +5,23 @@ import PackageDescription
 
 let package = Package(
   name: "Prophetbot",
+  platforms: [
+    .macOS(.v10_15)
+  ],
+  dependencies: [
+    .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.8.2")
+  ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
     // Targets can depend on other targets in this package and products from dependencies.
     .executableTarget(
       name: "Prophetbot",
+      dependencies: [
+        .product(name: "ArgumentParser", package: "swift-argument-parser")
+      ],
       resources: [
         .process("Resources/icon.png")
-      ])
+      ],
+    )
   ]
 )

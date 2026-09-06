@@ -1,4 +1,5 @@
 import AppKit
+import ArgumentParser
 import Foundation
 import LocalAuthentication
 
@@ -22,7 +23,7 @@ func set(password: String) -> Bool {
   return status == errSecSuccess
 }
 
-func get() -> String? {
+func get() throws -> String {
   let query: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
     kSecAttrService as String: service,
@@ -32,15 +33,15 @@ func get() -> String? {
   var item: CFTypeRef?
   let status = SecItemCopyMatching(query as CFDictionary, &item)
 
-  guard status != errSecItemNotFound else { return nil }
+  guard status != errSecItemNotFound else { throw ExitCode.failure }
   guard status == errSecSuccess,
     let passwordData = item as? Data,
     let password = String(data: passwordData, encoding: String.Encoding.utf8)
-  else { exit(EXIT_FAILURE) }
+  else { throw ExitCode.failure }
   return password
 }
 
-func exists() -> Bool {
+func exists() throws -> Bool {
   let query: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
     kSecAttrService as String: service,
@@ -51,13 +52,20 @@ func exists() -> Bool {
   let status = SecItemCopyMatching(query as CFDictionary, &item)
 
   guard status != errSecItemNotFound else { return false }
-  guard status == errSecSuccess else { exit(EXIT_FAILURE) }
+  guard status == errSecSuccess else { throw ExitCode.failure }
   return true
 }
 
+enum ProphetbotCommand : String, ExpressibleByArgument{
+  case gpg, setup
+}
+
 @main
-struct Prophetbot {
-  static func main() throws {
+struct Prophetbot: AsyncParsableCommand {
+  @Argument(help: "The action to execute")
+  var command: ProphetbotCommand
+
+  func run() async throws {
     if let iconUrl = Bundle.module.url(forResource: "icon", withExtension: "png") {
       let icon = NSImage(byReferencing: iconUrl)
       if let executablePath = Bundle.main.executablePath {
@@ -72,46 +80,52 @@ struct Prophetbot {
     var error: NSError?
     guard context.canEvaluatePolicy(policy, error: &error) else {
       print("Cannot leverage deviceOwnerAuthenticationWithBiometrics")
-      exit(EXIT_FAILURE)
+      throw ExitCode.failure
     }
 
-    if exists() {
-      print("OK")
-      while let input = readLine() {
-        switch input.lowercased().split(separator: " ")[0] {
-        case "getpin":
-          // TODO: Move to get() to reduce this switch block
-          context.evaluatePolicy(policy, localizedReason: description) { success, _ in
-            if success {
-              let password = get()
-              if password != nil {
-                print("D \(password!)")
-                print("OK")
-              } else {
-                print("ERR \(GPG_ERR_GENERAL) Failed to retrieve password")
-              }
-            } else {
-              print("ERR \(GPG_ERR_GENERAL) Authentication policy evaluation failed")
-            }
-          }
-        case "bye":
-          print("OK")
-          exit(EXIT_SUCCESS)
-        case "option", "setkeyinfo", "setdesc", "setprompt":
-          // Some commands must be implemented, so stub them out
-          print("OK")
-        default:
-          print("ERR \(GPG_ERR_NOT_IMPLEMENTED) Command not implemented")
+    switch command {
+    case ProphetbotCommand.gpg:
+      try await  gpg()
+    case ProphetbotCommand.setup:
+      setup()
+    }
+  }
+
+  func gpg() async throws {
+    guard try exists() else { throw ExitCode.failure }
+
+    print("OK")
+    while let input = readLine() {
+      switch input.lowercased().split(separator: " ")[0] {
+      case "getpin":
+        do {
+          // TODO: Look into if/whether context should be reused
+          let context = LAContext()
+          try await context.evaluatePolicy(policy, localizedReason: description)
+          let password = try get()
+          print("D \(password)")
+        } catch {
+          print("ERR Authentication policy evaluation failed")
         }
+      case "bye":
+        print("OK")
+        throw ExitCode.success
+      case "option", "setkeyinfo", "setdesc", "setprompt":
+        // Some commands must be implemented, so stub them out
+        print("OK")
+      default:
+        print("ERR \(GPG_ERR_NOT_IMPLEMENTED) Command not implemented")
       }
-    } else {
-      print("Enter GPG passphrase > ", terminator: "")
-      if let password = readLine() {
-        if set(password: password) {
-          print("Successfully stored passphrase")
-        } else {
-          print("Failed to store passphrase")
-        }
+    }
+  }
+
+  func setup() {
+    print("Enter GPG passphrase > ", terminator: "")
+    if let password = readLine() {
+      if set(password: password) {
+        print("Successfully stored passphrase")
+      } else {
+        print("Failed to store passphrase")
       }
     }
   }
