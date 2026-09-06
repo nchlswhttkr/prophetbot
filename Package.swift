@@ -23,6 +23,13 @@ let package = Package(
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
+    ),
+
+    .executableTarget(
+      name: "SetIcon",
+      dependencies: [
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+      ],
       resources: [
         .process("Resources/icon.png")
       ]

@@ -66,15 +66,6 @@ public struct ProphetbotCore {
     guard status == errSecSuccess else { throw ExitCode.failure }
     return true
   }
-
-  public static func setIcon(executablePath: String?) {
-    if let iconUrl = Bundle.module.url(forResource: "icon", withExtension: "png") {
-      let icon = NSImage(byReferencing: iconUrl)
-      if let forFile = executablePath {
-        NSWorkspace.shared.setIcon(icon, forFile: forFile)
-      }
-    }
-  }
 }
 
 public enum AccountMechanism: String {

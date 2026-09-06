@@ -5,7 +5,9 @@ build: build-debug
 build-%:
 	@swift build --configuration $*
 	@cp $(shell swift build --configuration $* --show-bin-path)/prophetbot-gpg prophetbot-gpg
+	@swift run --configuration $* --skip-build SetIcon prophetbot-gpg
 	@cp $(shell swift build --configuration $* --show-bin-path)/prophetbot-ssh prophetbot-ssh
+	@swift run --configuration $* --skip-build SetIcon prophetbot-ssh
 
 .PHONY: install
 install: build-release

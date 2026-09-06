@@ -19,8 +19,6 @@ struct ProphetbotGpg: AsyncParsableCommand {
   var command: ProphetbotCommand = ProphetbotCommand.gpg
 
   func run() async throws {
-    ProphetbotCore.setIcon(executablePath: Bundle.main.executablePath)
-
     // TODO: Investigate if a different flushing approach would be better
     setbuf(__stdoutp, nil)
 

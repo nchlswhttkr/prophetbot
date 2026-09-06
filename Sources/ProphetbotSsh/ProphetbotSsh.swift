@@ -14,8 +14,6 @@ struct ProphetbotGpg: AsyncParsableCommand {
   var command: ProphetbotCommand = ProphetbotCommand.ssh
 
   func run() async throws {
-    ProphetbotCore.setIcon(executablePath: Bundle.main.executablePath)
-
     let context = LAContext()
     var error: NSError?
     guard context.canEvaluatePolicy(ProphetbotCore.policy, error: &error) else {
