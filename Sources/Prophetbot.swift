@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import LocalAuthentication
 
@@ -57,6 +58,13 @@ func exists() -> Bool {
 @main
 struct Prophetbot {
   static func main() throws {
+    if let iconUrl = Bundle.module.url(forResource: "icon", withExtension: "png") {
+      let icon = NSImage(byReferencing: iconUrl)
+      if let executablePath = Bundle.main.executablePath {
+        NSWorkspace.shared.setIcon(icon, forFile: executablePath)
+      }
+    }
+
     // TODO: Investigate if a different flushing approach would be better
     setbuf(__stdoutp, nil)
 
