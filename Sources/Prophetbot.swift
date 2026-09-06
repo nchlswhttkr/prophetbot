@@ -12,6 +12,18 @@ let GPG_ERR_GENERAL = 1
 let GPG_ERR_NOT_IMPLEMENTED = 69
 let GPG_ERR_UNKNOWN_OPTION = 174
 
+func clear() throws {
+  let query: [String: Any] = [
+    kSecClass as String: kSecClassGenericPassword,
+    kSecAttrService as String: service,
+    kSecMatchLimit as String: kSecMatchLimitOne,
+    kSecReturnData as String: false,
+  ]
+  let status = SecItemDelete(query as CFDictionary)
+
+  guard status == errSecSuccess else { throw ExitCode.failure }
+}
+
 func set(password: String) -> Bool {
   let query: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
@@ -56,8 +68,8 @@ func exists() throws -> Bool {
   return true
 }
 
-enum ProphetbotCommand : String, ExpressibleByArgument{
-  case gpg, setup
+enum ProphetbotCommand: String, ExpressibleByArgument {
+  case clear, gpg, setup
 }
 
 @main
@@ -84,8 +96,10 @@ struct Prophetbot: AsyncParsableCommand {
     }
 
     switch command {
+    case ProphetbotCommand.clear:
+      try clear()
     case ProphetbotCommand.gpg:
-      try await  gpg()
+      try await gpg()
     case ProphetbotCommand.setup:
       setup()
     }
