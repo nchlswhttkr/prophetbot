@@ -1,8 +1,8 @@
 .PHONY: prophetbot
 prophetbot:
-	swift build
-	cp $(shell swift build --show-bin-path)/prophetbot-gpg prophetbot-gpg
-	cp $(shell swift build --show-bin-path)/prophetbot-ssh prophetbot-ssh
+	@swift build
+	@cp $(shell swift build --show-bin-path)/prophetbot-gpg prophetbot-gpg
+	@cp $(shell swift build --show-bin-path)/prophetbot-ssh prophetbot-ssh
 
 .PHONY: install
 install: prophetbot
@@ -11,7 +11,7 @@ install: prophetbot
 
 .PHONY: clean
 clean:
-	@git clean -d --force --quiet -X
+	@git clean -d --force --force --quiet -X
 
 .PHONY: format
 format:
