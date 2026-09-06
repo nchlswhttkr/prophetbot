@@ -1,10 +1,10 @@
-prophetbot: prophetbot.swift
-	@swiftc -parse-as-library prophetbot.swift -o prophetbot
+prophetbot: Package.swift $(wildcard Sources/*)
+	@swift build
+	@cp $(shell swift build --show-bin-path)/Prophetbot prophetbot
 
 .PHONY: install
 install: prophetbot
 	@cp prophetbot /usr/local/bin/prophetbot
-	@swift set-icon.swift
 
 .PHONY: clean
 clean:
@@ -12,4 +12,4 @@ clean:
 
 .PHONY: format
 format:
-	@swift format -i *.swift
+	@swift format -i $(wildcard Sources/*.swift)
