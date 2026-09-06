@@ -63,6 +63,7 @@ struct ProphetbotGpg: AsyncParsableCommand {
             ProphetbotCore.policy, localizedReason: ProphetbotCore.description)
           let password = try ProphetbotCore.get(account: account)
           print("D \(password)")
+          print("OK")
         } catch {
           print("ERR Authentication policy evaluation failed")
         }
