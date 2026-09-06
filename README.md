@@ -12,7 +12,7 @@ Prophetbot is property of [Future Cat/OneShot](https://www.oneshot-game.com/). Y
 
 ## Usage
 
-Build, sign, set password and configure as pinentry for GPG.
+Build, sign, set password and configure as pinentry for GPG. Make sure your Xcode installation is up to date.
 
 ```sh
 make install

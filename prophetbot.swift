@@ -54,52 +54,57 @@ func exists() -> Bool {
   return true
 }
 
-// TODO: Investigate if a different flushing approach would be better
-setbuf(__stdoutp, nil)
+@main
+struct Prophetbot {
+  static func main() throws {
+    // TODO: Investigate if a different flushing approach would be better
+    setbuf(__stdoutp, nil)
 
-let context = LAContext()
-var error: NSError?
-guard context.canEvaluatePolicy(policy, error: &error) else {
-  print("Cannot leverage deviceOwnerAuthenticationWithBiometrics")
-  exit(EXIT_FAILURE)
-}
+    let context = LAContext()
+    var error: NSError?
+    guard context.canEvaluatePolicy(policy, error: &error) else {
+      print("Cannot leverage deviceOwnerAuthenticationWithBiometrics")
+      exit(EXIT_FAILURE)
+    }
 
-if exists() {
-  print("OK")
-  while let input = readLine() {
-    switch input.lowercased().split(separator: " ")[0] {
-    case "getpin":
-      // TODO: Move to get() to reduce this switch block
-      context.evaluatePolicy(policy, localizedReason: description) { success, _ in
-        if success {
-          let password = get()
-          if password != nil {
-            print("D \(password!)")
-            print("OK")
-          } else {
-            print("ERR \(GPG_ERR_GENERAL) Failed to retrieve password")
+    if exists() {
+      print("OK")
+      while let input = readLine() {
+        switch input.lowercased().split(separator: " ")[0] {
+        case "getpin":
+          // TODO: Move to get() to reduce this switch block
+          context.evaluatePolicy(policy, localizedReason: description) { success, _ in
+            if success {
+              let password = get()
+              if password != nil {
+                print("D \(password!)")
+                print("OK")
+              } else {
+                print("ERR \(GPG_ERR_GENERAL) Failed to retrieve password")
+              }
+            } else {
+              print("ERR \(GPG_ERR_GENERAL) Authentication policy evaluation failed")
+            }
           }
-        } else {
-          print("ERR \(GPG_ERR_GENERAL) Authentication policy evaluation failed")
+        case "bye":
+          print("OK")
+          exit(EXIT_SUCCESS)
+        case "option", "setkeyinfo", "setdesc", "setprompt":
+          // Some commands must be implemented, so stub them out
+          print("OK")
+        default:
+          print("ERR \(GPG_ERR_NOT_IMPLEMENTED) Command not implemented")
         }
       }
-    case "bye":
-      print("OK")
-      exit(EXIT_SUCCESS)
-    case "option", "setkeyinfo", "setdesc", "setprompt":
-      // Some commands must be implemented, so stub them out
-      print("OK")
-    default:
-      print("ERR \(GPG_ERR_NOT_IMPLEMENTED) Command not implemented")
-    }
-  }
-} else {
-  print("Enter GPG passphrase > ", terminator: "")
-  if let password = readLine() {
-    if set(password: password) {
-      print("Successfully stored passphrase")
     } else {
-      print("Failed to store passphrase")
+      print("Enter GPG passphrase > ", terminator: "")
+      if let password = readLine() {
+        if set(password: password) {
+          print("Successfully stored passphrase")
+        } else {
+          print("Failed to store passphrase")
+        }
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 prophetbot: prophetbot.swift
-	@swiftc prophetbot.swift -o prophetbot
+	@swiftc -parse-as-library prophetbot.swift -o prophetbot
 
 .PHONY: install
 install: prophetbot
@@ -9,3 +9,7 @@ install: prophetbot
 .PHONY: clean
 clean:
 	@git clean -d --force --quiet -X
+
+.PHONY: format
+format:
+	@swift format -i *.swift
