@@ -6,7 +6,6 @@ import LocalAuthentication
 let service = "cloud.nicholas.prophetbot"
 
 public struct ProphetbotCore {
-  public static let description = "unlock your GPG key"
   public static let policy = LAPolicy.deviceOwnerAuthenticationWithBiometrics
 
   public static func clear() throws {

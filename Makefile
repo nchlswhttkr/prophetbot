@@ -11,8 +11,8 @@ build-%:
 
 .PHONY: install
 install: build-release
-	@cp prophetbot-gpg /usr/local/bin/prophetbot-gpg
-	@cp prophetbot-ssh /usr/local/bin/prophetbot-ssh
+	sudo cp prophetbot-gpg /usr/local/bin/prophetbot-gpg
+	sudo cp prophetbot-ssh /usr/local/bin/prophetbot-ssh
 
 .PHONY: clean
 clean:

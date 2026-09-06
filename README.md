@@ -15,9 +15,19 @@ Prophetbot is property of [Future Cat/OneShot](https://www.oneshot-game.com/). Y
 Build, sign, set password and configure as pinentry for GPG. Make sure your Xcode installation is up to date.
 
 ```sh
+# Build and install
 make install
-prophetbot
-echo "pinentry-program /usr/local/bin/prophetbot" >> ~/.gnupg/gpg-agent.conf
 
+# Setup for GPG
+prophetbot-gpg --setup
+echo "pinentry-program /usr/local/bin/prophetbot-gpg" >> ~/.gnupg/gpg-agent.conf
 echo "Hello Prophetbot" | gpg --clearsign
+
+# Setup for SSH
+prophetbot-ssh --setup
+export SSH_ASKPASS=/usr/local/bin/prophetbot-ssh
+export SSH_ASKPASS_REQUIRE=force
+echo 'Hello Prophetbot' | ssh-keygen -Y sign -n git -f ~/.ssh/id_ed25519
 ```
+
+<!-- TODO: Support multiple keys/users, EG SETKEY for GPG -->

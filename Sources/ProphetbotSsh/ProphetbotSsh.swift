@@ -10,8 +10,14 @@ enum ProphetbotCommand: String, ExpressibleByArgument {
 
 @main
 struct ProphetbotGpg: AsyncParsableCommand {
-  @Argument(help: "The action to execute")
-  var command: ProphetbotCommand = ProphetbotCommand.ssh
+  @Flag(help: "Clear the stored passphrase on start")
+  var clear = false
+
+  @Flag(help: "Prompt for a new passphrase on start")
+  var setup = false
+
+  @Argument(help: "The prompt to show user for input")
+  var prompt: [String] = []
 
   func run() async throws {
     let context = LAContext()
@@ -21,42 +27,30 @@ struct ProphetbotGpg: AsyncParsableCommand {
       throw ExitCode.failure
     }
 
-    switch command {
-    case ProphetbotCommand.clear:
-      try clear()
-    case ProphetbotCommand.ssh:
-      try await ssh()
-    case ProphetbotCommand.setup:
-      setup()
+    if clear {
+      try ProphetbotCore.clear()
     }
-  }
 
-  func clear() throws {
-    try ProphetbotCore.clear()
-  }
-
-  func setup() {
-    print("Enter SSH passphrase > ", terminator: "")
-    if let password = readLine() {
-      let account = Account(mechanism: AccountMechanism.SSH)
-      if ProphetbotCore.set(account: account, password: password) {
-        print("Successfully stored passphrase")
-      } else {
-        print("Failed to store passphrase")
+    if setup {
+      print("Enter SSH passphrase > ", terminator: "")
+      if let password = readLine() {
+        let account = Account(mechanism: AccountMechanism.SSH)
+        if ProphetbotCore.set(account: account, password: password) {
+          print("Successfully stored passphrase")
+        } else {
+          print("Failed to store passphrase")
+        }
       }
     }
-  }
 
-  func ssh() async throws {
     guard try ProphetbotCore.exists() else { throw ExitCode.failure }
 
     let account = Account(
       mechanism: AccountMechanism.SSH
     )
 
-    let context = LAContext()
     try await context.evaluatePolicy(
-      ProphetbotCore.policy, localizedReason: ProphetbotCore.description)
+      ProphetbotCore.policy, localizedReason: "unlock your SSH key passphrases")
     let password = try ProphetbotCore.get(account: account)
     print(password)
   }

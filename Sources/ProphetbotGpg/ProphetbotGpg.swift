@@ -9,14 +9,13 @@ let GPG_ERR_GENERAL = 1
 let GPG_ERR_NOT_IMPLEMENTED = 69
 let GPG_ERR_UNKNOWN_OPTION = 174
 
-enum ProphetbotCommand: String, ExpressibleByArgument {
-  case clear, gpg, setup
-}
-
 @main
 struct ProphetbotGpg: AsyncParsableCommand {
-  @Argument(help: "The action to execute")
-  var command: ProphetbotCommand = ProphetbotCommand.gpg
+  @Flag(help: "Clear the stored passphrase on start")
+  var clear = false
+
+  @Flag(help: "Prompt for a new passphrase on start")
+  var setup = false
 
   func run() async throws {
     // TODO: Investigate if a different flushing approach would be better
@@ -29,21 +28,22 @@ struct ProphetbotGpg: AsyncParsableCommand {
       throw ExitCode.failure
     }
 
-    switch command {
-    case ProphetbotCommand.clear:
-      try clear()
-    case ProphetbotCommand.gpg:
-      try await gpg()
-    case ProphetbotCommand.setup:
-      setup()
+    if clear {
+      try ProphetbotCore.clear()
     }
-  }
 
-  func clear() throws {
-    try ProphetbotCore.clear()
-  }
+    if setup {
+      print("Enter GPG passphrase > ", terminator: "")
+      if let password = readLine() {
+        let account = Account(mechanism: AccountMechanism.GPG)
+        if ProphetbotCore.set(account: account, password: password) {
+          print("Successfully stored passphrase")
+        } else {
+          print("Failed to store passphrase")
+        }
+      }
+    }
 
-  func gpg() async throws {
     guard try ProphetbotCore.exists() else { throw ExitCode.failure }
 
     let account = Account(
@@ -55,10 +55,8 @@ struct ProphetbotGpg: AsyncParsableCommand {
       switch input.lowercased().split(separator: " ")[0] {
       case "getpin":
         do {
-          // TODO: Look into if/whether context should be reused
-          let context = LAContext()
           try await context.evaluatePolicy(
-            ProphetbotCore.policy, localizedReason: ProphetbotCore.description)
+            ProphetbotCore.policy, localizedReason: "unlock your GPG key passphrases")
           let password = try ProphetbotCore.get(account: account)
           print("D \(password)")
           print("OK")
@@ -73,18 +71,6 @@ struct ProphetbotGpg: AsyncParsableCommand {
         print("OK")
       default:
         print("ERR \(GPG_ERR_NOT_IMPLEMENTED) Command not implemented")
-      }
-    }
-  }
-
-  func setup() {
-    print("Enter GPG passphrase > ", terminator: "")
-    if let password = readLine() {
-      let account = Account(mechanism: AccountMechanism.GPG)
-      if ProphetbotCore.set(account: account, password: password) {
-        print("Successfully stored passphrase")
-      } else {
-        print("Failed to store passphrase")
       }
     }
   }
