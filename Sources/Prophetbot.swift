@@ -12,6 +12,21 @@ let GPG_ERR_GENERAL = 1
 let GPG_ERR_NOT_IMPLEMENTED = 69
 let GPG_ERR_UNKNOWN_OPTION = 174
 
+enum AccountMechanism: String {
+  case GPG, SSH
+}
+
+struct Account {
+  var mechanism: AccountMechanism
+  var id: String
+}
+
+extension Account: CustomStringConvertible {
+  var description: String {
+    return "\(mechanism)"  // TODO: Add ID once implementations read key info
+  }
+}
+
 func clear() throws {
   let query: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
@@ -24,9 +39,10 @@ func clear() throws {
   guard status == errSecSuccess else { throw ExitCode.failure }
 }
 
-func set(password: String) -> Bool {
+func set(account: Account, password: String) -> Bool {
   let query: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
+    kSecAttrAccount as String: String(describing: account),
     kSecAttrService as String: service,
     kSecValueData as String: password,
   ]
@@ -35,9 +51,10 @@ func set(password: String) -> Bool {
   return status == errSecSuccess
 }
 
-func get() throws -> String {
+func get(account: Account) throws -> String {
   let query: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
+    kSecAttrAccount as String: String(describing: account),
     kSecAttrService as String: service,
     kSecMatchLimit as String: kSecMatchLimitOne,
     kSecReturnData as String: true,
@@ -69,7 +86,7 @@ func exists() throws -> Bool {
 }
 
 enum ProphetbotCommand: String, ExpressibleByArgument {
-  case clear, gpg, setup
+  case clear, gpg, setup, ssh
 }
 
 @main
@@ -88,6 +105,7 @@ struct Prophetbot: AsyncParsableCommand {
     // TODO: Investigate if a different flushing approach would be better
     setbuf(__stdoutp, nil)
 
+    // TODO: Look into if/whether context should be reused
     let context = LAContext()
     var error: NSError?
     guard context.canEvaluatePolicy(policy, error: &error) else {
@@ -102,11 +120,18 @@ struct Prophetbot: AsyncParsableCommand {
       try await gpg()
     case ProphetbotCommand.setup:
       setup()
+    case ProphetbotCommand.ssh:
+      try await ssh()
     }
   }
 
   func gpg() async throws {
     guard try exists() else { throw ExitCode.failure }
+
+    let account = Account(
+      mechanism: AccountMechanism.GPG,
+      id: ""
+    )
 
     print("OK")
     while let input = readLine() {
@@ -116,7 +141,7 @@ struct Prophetbot: AsyncParsableCommand {
           // TODO: Look into if/whether context should be reused
           let context = LAContext()
           try await context.evaluatePolicy(policy, localizedReason: description)
-          let password = try get()
+          let password = try get(account: account)
           print("D \(password)")
         } catch {
           print("ERR Authentication policy evaluation failed")
@@ -134,13 +159,31 @@ struct Prophetbot: AsyncParsableCommand {
   }
 
   func setup() {
+    let account = Account(
+      mechanism: AccountMechanism.GPG,
+      id: ""
+    )
     print("Enter GPG passphrase > ", terminator: "")
     if let password = readLine() {
-      if set(password: password) {
+      if set(account: account, password: password) {
         print("Successfully stored passphrase")
       } else {
         print("Failed to store passphrase")
       }
     }
+  }
+  func ssh() async throws {
+    guard try exists() else { throw ExitCode.failure }
+
+    let account = Account(
+      mechanism: AccountMechanism.SSH,
+      id: ""
+    )
+
+    // TODO: Look into if/whether context should be reused
+    let context = LAContext()
+    try await context.evaluatePolicy(policy, localizedReason: description)
+    let password = try get(account: account)
+    print(password)
   }
 }
